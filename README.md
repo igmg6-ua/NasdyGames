@@ -51,15 +51,6 @@ Pantallas: portada → ajustes (idioma ES/EN, chico/chica, música sí/no, nombr
 | `scn/` | Escenas: `scn_title`, `scn_setup`, `scn_level`, `scn_game` (+ `scn_game_rules`: plantillas, niveles, monedas, disparos, corazones, tiempo, portal), `scn_end` |
 | `assets/` | Gráficos, niveles, canciones y textos. `gfx/`, `levels/` y `snd/` los **generan** los scripts de `tools/` |
 
-### Lo que añade respecto al Challenge 6
-
-- **Sonido:** 8 efectos (canales 1 y 4) y un reproductor de música de 2 voces (canales 2 y 3) con 4 canciones y 3 jingles.
-- **Guardado** en la RAM del cartucho, con palabra mágica y suma de comprobación.
-- **Interrupciones:** el bucle duerme con `halt`; la portada usa la interrupción STAT para ondular el logo línea a línea.
-- **Fundidos** de paleta entre escenas y parpadeo del héroe herido con `OBP1`.
-- **Ayuda en las esquinas:** si el héroe choca pero el hueco está a 5 píxeles o menos, se desliza hacia él.
-- **IA que caza:** los espectros "cazadores" van hacia el héroe la mitad de las veces.
-- **Menús que se redibujan por líneas** en el VBLANK (una fila de texto por frame).
 
 ## Herramientas (`tools/`, Python 3)
 
