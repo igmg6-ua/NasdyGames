@@ -1,0 +1,7 @@
+/obj
+/*.gb
+/*.sav
+/*.map
+/*.sym
+/media
+__pycache__/
