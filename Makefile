@@ -20,7 +20,7 @@ include cfg/projectpaths.mk   # Local paths and files for the project
 
 ##-----------------------------------------
 ## Project general configuration
-PRJNAME  :=game
+PRJNAME  :=laberinto
 PAD      :=0xFF
 INCLUDE  :=-Isrc
 ASMFLAGS :=-E -Weverything
@@ -32,3 +32,12 @@ SYM_FILE :=$(PRJNAME).sym
 
 # Asembling and linking rules
 include cfg/rules.mk
+##-----------------------------------------
+## Assets: the tiles, the levels and the music are generated from tools/
+## (Python 3). The generated .asm files are in the repository, so "make" works
+## without Python; "make assets" generates them again after changing a design.
+.PHONY: assets
+assets:
+	python3 tools/gen_tiles.py
+	python3 tools/map2asm.py
+	python3 tools/music.py

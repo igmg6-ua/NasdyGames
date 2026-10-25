@@ -50,7 +50,7 @@ SECTION "Header", ROM0[$100]
    ;;    If title is less than 11 bytes, 00's should be added as padding.
    ;;    Older cartridges used 16 bytes, and no manufacturer code was present
    ;;  0123456789A (Max 11 bytes, from 0 to A in Hex)
-   db "Your Game"       ;; String constants do not end in 0
+   db "LABERINTO"       ;; String constants do not end in 0
    ds $013F - @, 0      ;; Pad Title with 0's up to $013E
 
    ;;--------------------------------------
@@ -60,9 +60,10 @@ SECTION "Header", ROM0[$100]
 
    ;;--------------------------------------
    ;;-- CGB Flag (Color GameBoy)
+   ;;    $00 (DMG1 - Monochrome GB)
    ;;    $80 (CGB but Backwards compatible)
    ;;    $C0 (CGB Only)
-   db $80   ;; Compatible
+   db $00   ;; DMG1 - Monochrome
 
    ;;--------------------------------------
    ;;-- New licensee code ($0144-$0145, 2 bytes)
@@ -112,9 +113,10 @@ SECTION "Header", ROM0[$100]
    ;;--------------------------------------
    ;;-- Header Checksum ($014D, 1 byte)
    ;;    rgbfix will calculate it
-   db $EE   ;; Padding placeholder (Could be any byte. It will be overwritten)
-
+   db $00   ;; Padding placeholder. Could be any byte. It will be overwritten.
+            ;; However, if different from 0, a warning will be issued when overwritten
    ;;--------------------------------------
    ;;-- Global Checksum ($014E-$014F, 2 bytes)
    ;;    rgbfix will calculate it
-   db $DE, $AD ;; Padding placeholder (Could be any byte. It will be overwritten)
+   db $00, $00 ;; Padding placeholders. Could be any values. They will be overwritten.
+               ;; If different from 0, a warning will be issued when overwritten
