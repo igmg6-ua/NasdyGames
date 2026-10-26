@@ -1,8 +1,8 @@
 # LABERINTO: un juego para Game Boy (DMG)
 
 Juego para la **GBRetroDev'26**, escrito entero en ensamblador SM83 (RGBDS). Es un
-proyecto de **GBTelera** (creado con `gbt_mkproject`) y sigue la arquitectura del
-**Challenge 6** de la asignatura: entidades de 16 bytes con componentes, sistemas que se
+proyecto de **GBTelera** (creado con `gbt_mkproject`) y sigue la arquitectura de los
+**Challenges** de la asignatura: entidades de 16 bytes con componentes, sistemas que se
 recorren con `man_entity_forall_matching`, OAM con DMA desde la HRAM, mapa de 32×32 con
 scroll, HUD en la window, niveles con estructura `LVL_` e IA con `THINK` y `rng_next`.
 
