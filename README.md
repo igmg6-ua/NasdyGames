@@ -18,7 +18,7 @@ make assets             # regenera tiles, niveles y música desde tools/ (Python
 make clean              # borra obj/
 ```
 
-- La ROM ya compilada (`laberinto.gb`) va incluida.
+- La ROM (`laberinto.gb`) se genera al compilar y no se incluye en el código fuente.
 - Compila sin avisos con el Makefile de GBTelera (`-E -Weverything`), con RGBDS 0.8.0 y 0.9.4.
 - Los símbolos quedan en `obj/laberinto.sym`: BGB y Emulicious muestran los nombres al depurar.
 
