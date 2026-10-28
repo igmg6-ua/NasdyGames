@@ -68,11 +68,19 @@ stat_isr:
 wait_frame::
     xor  a
     ldh  [hVBlankFlag], a
+    ldh a, [rIE]
+    and IEF_STAT
+    jr nz, .poll
 .sleep
     halt                              ;; \ Any interrupt wakes the CPU up:
     ldh  a, [hVBlankFlag]             ;; | sleep again until it is the VBLANK
     or   a                            ;; |
     jr   z, .sleep                    ;; /
+    ret
+.poll
+    ldh a, [hVBlankFlag]
+    or a
+    jr z, .poll
     ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
