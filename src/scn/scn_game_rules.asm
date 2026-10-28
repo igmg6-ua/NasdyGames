@@ -27,6 +27,7 @@ sec_frames:     ds 1                  ;; frames left of this second
 hurt_timer::    ds 1                  ;; frames of immunity left after a hit
 shot_entity::   ds 1                  ;; low byte of the bullet (ENTITY_NONE: no bullet)
 game_result::   ds 1                  ;; RESULT_...
+has_gun::       ds 1                 ;; 0=nogun/1=hasgun
 
 SECTION "Game rules", ROM0
 
@@ -60,6 +61,10 @@ PortalTemplate:
 PoofTemplate:
     TEMPLATE CMP_ALIVE | CMP_SPRITE | CMP_SELFDESTROY | CMP_ANIMATION, \
              TILE_POOF, 0, POOF_FRAMES, 0
+GunTemplate:
+    TEMPLATE CMP_ALIVE | CMP_SPRITE | CMP_COLLIDER, \
+             TILE_PORTAL, KIND_GUN, 0, 0
+
 
 ;; The velocity of a bullet in each direction (VY, VX), index = DIR * 2
 ShotVelocity:
@@ -215,6 +220,8 @@ game_enemies_ai:
 ;; ❌ Modifies A, BC, DE, HL
 game_level_start::
     call man_entity_init
+    xor a
+    ld [has_gun], a                   ;; NO GUN ON NEW LEVEL
     ld   a, ENTITY_NONE               ;; \ No bullet
     ld   [shot_entity], a             ;; /
     xor  a
@@ -251,6 +258,17 @@ game_level_start::
 .sheet                                ;; |
     ld   [PLAYER_ENTITY + E_TILE], a  ;; |
     ld   [PLAYER_ENTITY + E_SHEET], a ;; /
+
+                               ;; |
+    ;ld   de, 1               ;; |
+    ;add  hl, de                       ;; |
+    ;ld   c, [hl]                      ;; |
+    ;inc  hl                           ;; |
+    ;ld   b, [hl]
+    ld b, 28
+    ld c, 5                      ;; |
+    ld   hl, GunTemplate          ;; |
+    call game_spawn_at 
 
     pop  hl                           ;; \ The portal
     push hl                           ;; |
@@ -305,6 +323,9 @@ game_entity_destroy::
 ;; 📥 DE = the hero
 ;; ❌ Modifies A, BC, HL
 game_shoot::
+    ld a, [has_gun]      
+    and a
+    ret z                             ;; If no gun, do nothing
     ld   a, [shot_entity]             ;; \ Only one bullet at a time
     cp   ENTITY_NONE                  ;; |
     ret  nz                           ;; /
@@ -388,7 +409,14 @@ collide_hero:
     jr   z, game_hero_hurt
     cp   KIND_PORTAL
     jr   z, game_portal
+    cp   KIND_GUN
+    jr   z, .give_gun
     ret
+    .give_gun:
+        ld a, 1
+        ld [has_gun], a
+        jp man_entity_free
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; A spectre touches the hero: a heart less, and some time of immunity.

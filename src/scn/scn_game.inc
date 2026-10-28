@@ -7,6 +7,7 @@ DEF GAME_INC = 1
 INCLUDE "man/man_entity.inc"
 
 ;; KIND (one bit per kind, so a mask can select several)
+DEF KIND_GUN    = %10000
 DEF KIND_PLAYER = %0001
 DEF KIND_SHOT   = %0010
 DEF KIND_ENEMY  = %0100
