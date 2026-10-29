@@ -63,7 +63,7 @@ PoofTemplate:
              TILE_POOF, 0, POOF_FRAMES, 0
 GunTemplate:
     TEMPLATE CMP_ALIVE | CMP_SPRITE | CMP_COLLIDER, \
-             TILE_PORTAL, KIND_GUN, 0, 0
+             TILE_GUN, KIND_GUN, 0, 0
 
 
 ;; The velocity of a bullet in each direction (VY, VX), index = DIR * 2
