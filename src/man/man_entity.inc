@@ -7,7 +7,7 @@ DEF MAN_ENTITY_INC = 1
 ;;--------------------------------------------------------------
 ;; Entities: array of MAX_ENTITIES entities of SIZEOF_ENTITY bytes
 ;;--------------------------------------------------------------
-DEF MAX_ENTITIES = 12
+DEF MAX_ENTITIES = 14         ;; hero, portal, bullet, 3 pickups, 6 spectres + 2 spare
 RSRESET
 DEF E_CMP        RB 1         ;; 0  Which components the entity has (bitflags)
 DEF E_SPRITE     RB 1         ;;    SPRITE (offset): the same 4 bytes as an OAM entry

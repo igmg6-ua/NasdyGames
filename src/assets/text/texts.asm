@@ -15,7 +15,7 @@ SECTION "Texts", ROM0
     BITEXT TxtCredits,    "NASDYGAMES  2026", "NASDYGAMES  2026"
 
 ;; Settings
-    BITEXT TxtSettings,   "AJUSTES", "SETTINGS"
+    BITEXT TxtSettings,   "MENU", "MENU"
     BITEXT TxtLanguage,   "IDIOMA", "LANGUAGE"
     BITEXT TxtLangName,   "ESPAÑOL", "ENGLISH"
     BITEXT TxtHero,       "HEROE", "HERO"
@@ -25,6 +25,7 @@ SECTION "Texts", ROM0
     BITEXT TxtOn,         "SI", "ON"
     BITEXT TxtOff,        "NO", "OFF"
     BITEXT TxtName,       "NOMBRE", "NAME"
+    BITEXT TxtMedals,     "MEDALLONES", "MEDALS"
     BITEXT TxtPlay,       "JUGAR", "PLAY"
     BITEXT TxtHelp,       "A:CAMBIA START:JUGAR", "A:CHANGE START:PLAY"
     BITEXT TxtHelpEdit,   "<>:MUEVE  A:LISTO", "<>:MOVE  A:DONE"
@@ -36,9 +37,21 @@ SECTION "Texts", ROM0
     BITEXT TxtShoot,      "A: DISPARAR", "A: SHOOT"
     BITEXT TxtPauseHelp,  "START: PAUSA", "START: PAUSE"
     BITEXT TxtBonus,      "BONUS", "BONUS"
+    BITEXT TxtPickups,    "ESCUDO Y CORAZON!", "SHIELD AND HEART!"
 
 ;; Game
     BITEXT TxtPause,      "- PAUSA -", "- PAUSED -"
+
+;; Summary of a level
+    BITEXT TxtCleared,    "SUPERADO!", "CLEARED!"
+    BITEXT TxtTime,       "TIEMPO", "TIME"
+    BITEXT TxtMedal,      "MEDALLON", "MEDALLION"
+    BITEXT TxtYes,        "SI", "YES"
+    BITEXT TxtNo,         "NO", "NO"
+
+;; Medallion and gallery
+    BITEXT TxtMedalWon,   "ESPECTROS DERROTADOS", "ALL SPECTRES BEATEN"
+    BITEXT TxtBack,       "B: VOLVER", "B: BACK"
 
 ;; End
     BITEXT TxtVictory,    "HAS ESCAPADO!", "YOU ESCAPED!"

@@ -5,6 +5,7 @@ INCLUDE "scn/scn_game.inc"
 INCLUDE "engine/macros.inc"
 INCLUDE "engine/gfx.inc"
 INCLUDE "engine/sound.inc"
+INCLUDE "assets/levels/levels.inc"
 
 DEF LEVEL_AUTO_FRAMES = 240           ;; it goes on by itself after 4 seconds
 DEF LEVEL_MIN_FRAMES  = 20            ;; and not before 1/3 s (a button held does not skip it)
@@ -20,9 +21,8 @@ scn_level_init::
     ld   de, TxtLevel                 ;; |
     call draw_ltext                   ;; |
     inc  hl                           ;; |
-    ld   a, [current_level]           ;; |
-    inc  a                            ;; |
-    call draw_digit                   ;; /
+    call level_number_bcd             ;; |
+    call draw_level_number            ;; /
     PUTS_C 6, TxtGoodLuck             ;; \ "SUERTE," and the name
     SCRN_POS 7, 0                     ;; |
     ld   de, player_name              ;; |
@@ -44,35 +44,40 @@ scn_level_init::
     ld   [hl+], a                     ;; |
     dec  b                            ;; |
     jr   nz, .heart                   ;; /
-    inc  hl                           ;; \ ...and the coins
+    inc  hl                           ;; \ ...and the time of this level
     inc  hl                           ;; |
-    ld   [hl], TILE_COIN              ;; |
+    ld   [hl], TILE_ICON_CLOCK        ;; |
     inc  hl                           ;; |
-    ld   [hl], TILE_CHAR_X            ;; |
-    inc  hl                           ;; |
-    ld   a, [coins]                   ;; |
-    call draw_bcd                     ;; /
-
-    ld   a, [current_level]           ;; \ After a level: its time bonus
-    or   a                            ;; |
-    jr   z, .help                     ;; |
-    SCRN_POS 13, 6                    ;; |
-    ld   de, TxtBonus                 ;; |
-    call draw_ltext                   ;; |
-    inc  hl                           ;; |
-    ld   [hl], TILE_CHAR_PLUS         ;; |
-    inc  hl                           ;; |
-    ld   a, [level_bonus]             ;; |
+    push hl                           ;; |
+    call level_get                    ;; |
+    ld   de, LVL_TIME                 ;; |
+    add  hl, de                       ;; |
+    ld   a, [hl+]                     ;; |
+    ld   e, [hl]                      ;; |
+    pop  hl                           ;; |
     and  $0F                          ;; |
     call draw_digit                   ;; |
-    ld   a, [level_bonus + 1]         ;; |
-    call draw_bcd                     ;; |
+    ld   a, e                         ;; |
+    call draw_bcd                     ;; /
+
+    SCRN_POS 13, 3                    ;; \ The best time of this level
+    ld   de, TxtRecord                ;; |
+    call draw_ltext                   ;; |
+    inc  hl                           ;; |
+    call level_best_get               ;; | D = minutes, E = seconds
+    call draw_time                    ;; /
+
+    ld   a, [current_level]           ;; \ Before the first level: the buttons
+    or   a                            ;; |
+    jr   nz, .not_first               ;; |
+    PUTS_C 15, TxtShoot               ;; |
     jr   .start                       ;; /
-.help
-    PUTS_C 13, TxtShoot               ;; \ Before the first one: the buttons
-    PUTS_C 14, TxtPauseHelp           ;; /
+.not_first
+    cp   PICKUPS_LEVEL                ;; \ The first level with a shield and a heart
+    jr   nz, .start                   ;; |
+    PUTS_C 15, TxtPickups             ;; /
 .start
-    PUTS_C 16, TxtPressStart
+    PUTS_C 17, TxtPressStart
     ld   hl, scn_level_update
     ld   a, LCDC_NO_WINDOW
     jp   scene_set

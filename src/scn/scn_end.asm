@@ -41,8 +41,10 @@ scn_end_init::
     call draw_text_centered           ;; /
 
     PUTS 7, 2, TxtCoins               ;; \ Coins
-    SCRN_POS 7, NUMBER_COLUMN + 2     ;; |
-    ld   a, [coins]                   ;; |
+    SCRN_POS 7, NUMBER_COLUMN         ;; | (all the levels: 4 digits)
+    ld   a, [total_coins]             ;; |
+    call draw_bcd                     ;; |
+    ld   a, [total_coins + 1]         ;; |
     call draw_bcd                     ;; /
     PUTS 9, 2, TxtSpectres            ;; \ Spectres defeated
     SCRN_POS 9, NUMBER_COLUMN + 2     ;; |

@@ -60,6 +60,18 @@ hud_refresh::
     ld   a, [hearts]                  ;; \ Hearts
     ld   c, a                         ;; |
     call hud_draw_hearts              ;; /
+    ld   a, [has_shield]              ;; \ The shield and the gun, if he has them
+    or   a                            ;; |
+    jr   z, .no_shield                ;; |
+    ld   a, TILE_ICON_SHIELD          ;; |
+    ld   [hud_buffer + HUD_SHIELD_CELL], a ;; |
+.no_shield                            ;; |
+    ld   a, [has_gun]                 ;; |
+    or   a                            ;; |
+    jr   z, .no_gun                   ;; |
+    ld   a, TILE_ICON_GUN             ;; |
+    ld   [hud_buffer + HUD_GUN_CELL], a ;; |
+.no_gun                               ;; /
     ld   hl, hud_buffer + HUD_COIN_ICON ;; \ Coins (2 BCD digits)
     ld   [hl], TILE_COIN              ;; |
     inc  hl                           ;; |
@@ -78,12 +90,11 @@ hud_refresh::
     call draw_digit                   ;; |
     ld   a, [time_lo]                 ;; |
     call draw_bcd                     ;; /
-    ld   hl, hud_buffer + HUD_LEVEL_ICON ;; \ Level (1-3)
+    ld   hl, hud_buffer + HUD_LEVEL_ICON ;; \ Level (1-10, 2 digits)
     ld   [hl], TILE_ICON_LEVEL        ;; |
     inc  hl                           ;; |
-    ld   a, [current_level]           ;; |
-    inc  a                            ;; |
-    call draw_digit                   ;; /
+    call level_number_bcd             ;; |
+    call draw_bcd                     ;; /
     ; continues in hud_mark
 
 ;; Asks to copy the strip in the next VBLANK. ❌ Modifies A

@@ -8,6 +8,11 @@ DEF NOTE_REST = $FE           ;; silence
 DEF NOTE_LOOP = $FF           ;; go back to the start of the song
 DEF NOTE_STOP = $FD           ;; the song ends
 
+;; Tempo (music_tempo): quarters of a tick per frame
+DEF TEMPO_NORMAL = 4          ;; as written
+DEF TEMPO_FAST   = 5          ;; 1.25 times: half of the time of the level has gone
+DEF TEMPO_FASTER = 6          ;; 1.5 times: only a third of the time is left
+
 ;; Sound effects (index of SfxTable)
 RSRESET
 DEF SFX_SHOOT  RB 1

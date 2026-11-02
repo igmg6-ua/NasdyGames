@@ -17,16 +17,18 @@ DEF HUD_CELLS    = 20                   ;; the cells of the strip (one row of th
 ;; screen off. Here the HUD changes while playing (coins, time...), so it is
 ;; built in hud_buffer (WRAM) and copied to the window in the VBLANK.
 ;; These are the cells of hud_buffer (column of the window):
-;;   0  1-5     7  8-9    11 12   14 15-17  18 19
-;;      ♥♥♥♡♡   ●  07     ☠  3    ◷  118    ▣  1
-DEF HUD_HEARTS_CELL = 1
+;;   0-4     5  6   7  8-9    10 11   12 13-15   17 18-19
+;;   ♥♥♥♡♡   ◈  ⌐   ●  07     ☠  3    ◷  118      ▣  10
+DEF HUD_HEARTS_CELL = 0
+DEF HUD_SHIELD_CELL = 5       ;; the shield icon, while the hero has it
+DEF HUD_GUN_CELL    = 6       ;; the gun icon, once the hero has it
 DEF HUD_COIN_ICON   = 7
 DEF HUD_COINS_CELL  = 8
-DEF HUD_ENEMY_ICON  = 11
-DEF HUD_ENEMY_CELL  = 12
-DEF HUD_CLOCK_ICON  = 14
-DEF HUD_TIME_CELL   = 15
-DEF HUD_LEVEL_ICON  = 18
-DEF HUD_LEVEL_CELL  = 19
+DEF HUD_ENEMY_ICON  = 10
+DEF HUD_ENEMY_CELL  = 11
+DEF HUD_CLOCK_ICON  = 12
+DEF HUD_TIME_CELL   = 13
+DEF HUD_LEVEL_ICON  = 17
+DEF HUD_LEVEL_CELL  = 18
 
 ENDC

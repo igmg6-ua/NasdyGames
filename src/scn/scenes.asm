@@ -16,6 +16,7 @@ scene_update_ptr: ds 2                ;; the routine of each frame of the scene
 scene_lcdc::     ds 1                 ;; rLCDC of the scene (with or without window)
 next_scene:      ds 2                 ;; the start of the next scene (0: none)
 scene_timer::    ds 1                 ;; free for the scenes (frames since it started)
+tiles_dirty:     ds 1                 ;; 1: a scene changed tiles of the VRAM (medallion)
 
 SECTION "Scenes", ROM0
 
@@ -81,6 +82,7 @@ scene_check_change::
 scene_start::
     push hl
     call lcd_off
+    call tiles_reload
     call raster_off
     call oam_clear
     call sys_camera_reset
@@ -99,6 +101,26 @@ scene_start::
     call input_clear
     call fade_in
     jp   palettes_reset               ;; (OBP1 too: the hurt palette)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; A scene that changes tiles of the VRAM calls tiles_dirty_set, and the next
+;; scene loads them all again. ❌ Modifies A
+tiles_dirty_set::
+    ld   a, 1
+    ld   [tiles_dirty], a
+    ret
+
+;; ⚠️ The screen must be OFF   ❌ Modifies A, BC, DE, HL
+tiles_reload:
+    ld   a, [tiles_dirty]
+    or   a
+    ret  z
+    xor  a
+    ld   [tiles_dirty], a
+    ld   hl, tiles
+    ld   de, VRAM_TILES
+    ld   bc, tiles_end - tiles
+    jp   memcpy16
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; The whole background blank. ⚠️ The screen must be OFF

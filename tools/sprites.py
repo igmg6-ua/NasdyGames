@@ -409,6 +409,22 @@ BG_HUD = [
                           "31333.1.",
                           "3111111.",
                           "3......."]),
+    ('TILE_ICON_SHIELD', ["........",
+                          ".333333.",
+                          ".321123.",
+                          ".321123.",
+                          ".322223.",
+                          "..3223..",
+                          "...33...",
+                          "........"]),
+    ('TILE_ICON_GUN',    ["........",
+                          "........",
+                          "3333333.",
+                          "3111223.",
+                          "3333333.",
+                          ".323....",
+                          ".333....",
+                          "........"]),
 ]
 # Sólidos (desde TILE_FIRST_SOLID). La pared tiene relieve: "tapa" vista desde
 # arriba y "frente" de ladrillo cuando debajo hay suelo.
@@ -461,13 +477,168 @@ GUN = [
     ]),
 ]
 
+## Escudo recogible (nivel 3 en adelante): para un golpe de un espectro
+SHIELD = [
+    ('A', [
+        "................",
+        "................",
+        "................",
+        "...3333333333...",
+        "...3211111123...",
+        "...3213333123...",
+        "...3213113123...",
+        "...3213113123...",
+        "....32133123....",
+        "....32111123....",
+        ".....322223.....",
+        "......3223......",
+        ".......33.......",
+        "................",
+        "................",
+        "................",
+    ]),
+]
+
+## Corazón recogible (nivel 3 en adelante): un corazón más, o 15 segundos
+HEART = [
+    ('A', [
+        "................",
+        "................",
+        "................",
+        "....333..333....",
+        "...32213322223..",
+        "..3211122222223.",
+        "..3211222222223.",
+        "..3222222222223.",
+        "...32222222223..",
+        "....322222223...",
+        ".....3222223....",
+        "......32223.....",
+        ".......323......",
+        "........3.......",
+        "................",
+        "................",
+    ]),
+]
+
 CHARACTERS = [('BOY', BOY), ('GIRL', GIRL), ('SPECTRE', SPECTRE)]
 OBJECTS = [
         ('BULLET', BULLET), 
         ('PORTAL', PORTAL), 
         ('POOF', POOF), 
         ('GUN', GUN),
+        ('SHIELD', SHIELD),
+        ('HEART', HEART),
 ]
+
+
+# ---------------------------------------------------------------------------
+# Medallón: se gana al derrotar a todos los espectros de un nivel.
+# Diseño: una moneda grande con un borde de cuentas y un laberinto en el centro.
+# ---------------------------------------------------------------------------
+_MAZE_EMBLEM = [   # 13 x 13, centrado en el medallón grande
+    "3333333.33333",
+    "3...........3",
+    "3.33333.333.3",
+    "3.3.......3.3",
+    "3.3.33333.3.3",
+    "3.3.3...3.3.3",
+    "3...3.3.3...3",
+    "3.3.3...3.3.3",
+    "3.3.333.3.3.3",
+    "3.3.......3.3",
+    "3.333.33333.3",
+    "3...........3",
+    "3333333333333",
+]
+_MAZE_EMBLEM_SMALL = [   # 7 x 7, para el medallón pequeño
+    "333.333",
+    "3.....3",
+    "3.3.3.3",
+    "3.3.3.3",
+    "3.333.3",
+    "3.....3",
+    "3333333",
+]
+
+
+def _medal(size, emblem, locked=False):
+    import math
+    c = (size - 1) / 2
+    r_out = size / 2
+    rows = []
+    e0 = (size - len(emblem)) // 2
+    for y in range(size):
+        row = ''
+        for x in range(size):
+            d = math.hypot(x - c, y - c)
+            if d > r_out - 0.2:
+                row += '.'
+                continue
+            if locked:
+                row += '3' if d > r_out - 1.2 else '2'
+                continue
+            ang = math.degrees(math.atan2(y - c, x - c)) % 360
+            if size >= 32:
+                if d > r_out - 1.2:
+                    ch = '3'
+                elif d > r_out - 3.2:          # borde con cuentas
+                    ch = '1' if int(ang) % 30 < 8 else '2'
+                    if 200 < ang < 250:
+                        ch = '1'               # brillo arriba a la izquierda
+                elif d > r_out - 4.2:
+                    ch = '3'
+                else:
+                    ch = '1'
+            else:
+                if d > r_out - 1.2:
+                    ch = '3'
+                elif d > r_out - 2.4:
+                    ch = '2'
+                else:
+                    ch = '1'
+            ey, ex = y - e0, x - e0
+            if ch == '1' and 0 <= ey < len(emblem) and 0 <= ex < len(emblem):
+                if emblem[ey][ex] == '3':
+                    ch = '3'
+            row += ch
+        rows.append(row)
+    return rows
+
+
+MEDAL_BIG = _medal(32, _MAZE_EMBLEM)                     # 32 x 32 (sprites)
+MEDAL_SMALL = _medal(16, _MAZE_EMBLEM_SMALL)             # 16 x 16 (fondo)
+MEDAL_LOCKED = _medal(16, _MAZE_EMBLEM_SMALL, locked=True)
+
+
+def medal_spin_frames():
+    """Las imágenes del medallón girando: de frente a de canto.
+    Cada una es el dibujo encogido en horizontal (32, 26, 18, 10 y 4 píxeles
+    de ancho), centrado. La de canto es una barra con el grosor de la moneda."""
+    frames = []
+    for w in (32, 26, 18, 10):
+        x0 = (32 - w) // 2
+        rows = []
+        for y in range(32):
+            row = ['.'] * 32
+            for x in range(w):
+                sx = int((x + 0.5) * 32 / w)
+                ch = MEDAL_BIG[y][sx]
+                if w < 32 and ch == '1' and x < w // 3:
+                    ch = '2'               # sombra: la cara que se aleja
+                row[x0 + x] = ch
+            rows.append(''.join(row))
+        frames.append(rows)
+    rows = []
+    for y in range(32):
+        row = ['.'] * 32
+        if MEDAL_BIG[y][16] != '.':
+            for k, ch in enumerate('3123'):
+                row[14 + k] = ch
+        rows.append(''.join(row))
+    frames.append(rows)
+    return frames
+
 
 
 def check():

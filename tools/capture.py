@@ -7,8 +7,9 @@ Uso (desde la carpeta del proyecto, después de "make"):
 Necesita:  pip install pyboy pillow   y   ffmpeg instalado.
 
 Un bot juega la partida entera: elige chica e inglés, escribe un nombre,
-y en cada uno de los 3 niveles recoge monedas (camino más corto con BFS),
-caza a los espectros disparando cuando los tiene delante y entra en el portal.
+y en cada uno de los 10 niveles coge la pistola (y el escudo y el corazón),
+recoge monedas (camino más corto con BFS), caza a todos los espectros
+disparando cuando los tiene delante (medallón) y entra en el portal.
 Mientras juega se graban los frames y luego se montan:
 
     screenshot_1..5.png   capturas (x4, paleta verde de la DMG)
@@ -45,7 +46,10 @@ FONT_PATHS = ['/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
 NAME_CHARS = " ABCDEFGHIJKLMNÑOPQRSTUVWXYZ"
 ENTITY_NONE = 0xFF
 E_SIZE, E_Y, E_X, E_KIND, E_DIR = 16, 1, 2, 7, 8
-KIND_ENEMY = 4
+KIND_ENEMY, KIND_GUN, KIND_SHIELD, KIND_HEART = 4, 0x10, 0x20, 0x40
+MAX_ENTITIES = 14
+NUM_LEVELS = 10
+RECORD_LEVELS = 3
 STEP = {0: (1, 0), 1: (-1, 0), 2: (0, -1), 3: (0, 1)}      # DIR -> (dy, dx)
 BUTTON = {(0, 1): 'right', (0, -1): 'left', (1, 0): 'down', (-1, 0): 'up'}
 
@@ -134,7 +138,7 @@ class Session:
         return self.inv.get(self.v('scene_update_ptr') + 256 * self.v('scene_update_ptr', 1), '')
 
     def state(self):
-        return (self.v('coins'), self.v('kills'), self.v('hearts'), self.v('current_level'))
+        return (self.v('total_coins', 1), self.v('kills'), self.v('hearts'), self.v('current_level'))
 
     def tick(self, k=1):
         for _ in range(k):
@@ -208,22 +212,28 @@ class Session:
 
     def ok(self, y, x):
         g = self.grid
-        return 0 <= y + 1 < 32 and 0 <= x + 1 < 32 and g[y + 1][x] != '#' and g[y + 1][x + 1] != '#'
+        return (0 <= y + 1 < len(g) and 0 <= x + 1 < len(g[0])
+                and g[y + 1][x] != '#' and g[y + 1][x + 1] != '#')
 
-    def bfs(self, a):
+    def bfs(self, a, goal=None):
+        """Caminos desde a. No pasa por encima del portal (salvo si es el destino)."""
+        sy, sx = self.exit_cell()
+        portal = {(sy + dy, sx + dx) for dy in (-1, 0, 1) for dx in (-1, 0, 1)}
+        if goal in portal or a in portal:
+            portal = set()
         prev = {a: None}
         q = deque([a])
         while q:
             c = q.popleft()
             for d in BUTTON:
                 n = (c[0] + d[0], c[1] + d[1])
-                if n not in prev and self.ok(*n):
+                if n not in prev and n not in portal and self.ok(*n):
                     prev[n] = c
                     q.append(n)
         return prev
 
     def path(self, a, b):
-        prev = self.bfs(a)
+        prev = self.bfs(a, b)
         if b not in prev:
             return None
         p = [b]
@@ -234,13 +244,25 @@ class Session:
     def hero(self):
         return self.m[self.E + E_Y], self.m[self.E + E_X]
 
-    def enemies(self):
+    def things(self, kind):
         out = []
-        for i in range(1, 12):
+        for i in range(1, MAX_ENTITIES):
             b = self.E + E_SIZE * i
-            if self.m[b] & 0x40 and self.m[b + E_KIND] == KIND_ENEMY:
+            if self.m[b] & 0x80 and self.m[b + E_KIND] == kind:
                 out.append((self.m[b + E_Y], self.m[b + E_X]))
         return out
+
+    def enemies(self):
+        return self.things(KIND_ENEMY)
+
+    def pick_up(self, kind):
+        """Va a por la pistola, el escudo o el corazón (si están en el nivel)."""
+        t = self.things(kind)
+        if t:
+            self.goto((t[0][0] // 8, t[0][1] // 8), 60 * 40)
+            self.hold(None)
+            return True
+        return False
 
     def enemy_ahead(self):
         """¿Hay un espectro delante del héroe, en línea y sin pared en medio?"""
@@ -248,9 +270,9 @@ class Session:
         dy, dx = STEP[self.m[self.E + E_DIR]]
         cy, cx = (py + 4) // 8, (px + 4) // 8
         for gy, gx in self.enemies():
-            if dx and abs(gy - py) < 8 and (gx - px) * dx > 0:
+            if dx and abs(gy - py) < 12 and (gx - px) * dx > 0:
                 n = abs(gx - px) // 8
-            elif dy and abs(gx - px) < 8 and (gy - py) * dy > 0:
+            elif dy and abs(gx - px) < 12 and (gy - py) * dy > 0:
                 n = abs(gy - py) // 8
             else:
                 continue
@@ -260,7 +282,7 @@ class Session:
 
     def step_towards(self, target):
         """Un frame hacia una celda. True si ya está en ella."""
-        if self.enemy_ahead() and self.v('shot_entity') == ENTITY_NONE:
+        if self.v('has_gun') and self.enemy_ahead() and self.v('shot_entity') == ENTITY_NONE:
             self.pb.button('a')
         # Los botones llegan al juego con un frame de retraso: se decide con la
         # posición que tendrá el héroe en el frame siguiente
@@ -299,7 +321,7 @@ class Session:
                 return True
         return False
 
-    def hunt(self, max_frames=60 * 25):
+    def hunt(self, max_frames=60 * 90):
         """Persigue al espectro más cercano disparando cuando lo tiene delante."""
         for _ in range(max_frames):
             if not self.playing() or not self.enemies():
@@ -317,10 +339,29 @@ class Session:
                         if best is None or k < best[0]:
                             best = (k, c)
             if not best:
-                self.tick()
+                self.aim()
                 continue
             self.step_towards(best[1])
         self.hold(None)
+
+    def aim(self):
+        """No se puede llegar a ningún espectro (p. ej. uno junto al portal):
+        si hay uno en la misma fila o columna, se gira hacia él y dispara."""
+        self.hold(None)
+        py, px = self.hero()
+        for gy, gx in self.enemies():
+            if abs(gy - py) < 12:
+                d = 'left' if gx < px else 'right'
+            elif abs(gx - px) < 12:
+                d = 'up' if gy < py else 'down'
+            else:
+                continue
+            self.pb.button(d)
+            self.tick(2)
+            if self.v('has_gun') and self.v('shot_entity') == ENTITY_NONE:
+                self.pb.button('a')
+            break
+        self.tick(8)
 
     def coin_cells(self):
         cells = []
@@ -382,7 +423,9 @@ def play(record=True):
     s.tag = 'options'
     s.tick(30)
     s.tap('start', 10)
-    for level in range(3):
+    s.log = []
+    for level in range(NUM_LEVELS):
+        s.record = record and level < RECORD_LEVELS     # (memoria: se graban los primeros)
         s.tag = 'intro'
         if not s.wait_scene('scn_level_update', 900):
             break
@@ -392,16 +435,32 @@ def play(record=True):
         s.tag = 'game'
         s.load_level()
         s.tick(10)
-        s.collect(3)
-        s.hunt()
+        start = s.n
+        s.pick_up(KIND_GUN)
+        s.pick_up(KIND_SHIELD)
+        if s.v('hearts') < 5 or level % 2:
+            s.pick_up(KIND_HEART)
         s.collect(2)
-        s.goto(s.exit_cell(), 60 * 40)
+        s.hunt()
+        s.collect(1)
+        s.goto(s.exit_cell(), 60 * 60)
         s.hold(None)
         s.tag = 'clear'
         while s.scene() == 'scn_game_update':
             s.tick()
+        s.log.append((level + 1, (s.n - start) / 60, s.v('kills'), s.v('level_medal'),
+                      s.v('hearts'), s.v('level_bonus'), s.v('level_bonus', 1), s.scene()))
         if s.scene() == 'scn_end_update':
             break
+        if s.wait_scene('scn_medal_update', 120):
+            s.tag = 'medal'
+            s.tick(200)
+            s.tap('start', 4)
+        s.tag = 'summary'
+        if s.wait_scene('scn_clear_update', 200):
+            s.tick(90)
+            s.tap('start', 4)
+    s.record = record
     s.tag = 'end'
     s.wait_scene('scn_end_update', 300)
     s.tick(200)
@@ -489,11 +548,11 @@ def make_trailer(s, path, cover):
     clips.append((lit(s, frames_with(s, 'options'))[:int(3 * FPS)],
                   'Play as a girl or a boy, in English or Spanish'))
     clips.append((lit(s, frames_with(s, 'name'))[::3][:int(2 * FPS)], 'Type your name'))
-    clips.append((game[:int(4.5 * FPS)], 'Three mazes, bigger than the screen'))
+    clips.append((game[:int(4.5 * FPS)], 'Ten mazes, bigger than the screen'))
     used = set(game[:int(4.5 * FPS)])
     budget = 38 * FPS - sum(len(c[0]) for c in clips) - int(4.5 * FPS) - int(2.5 * FPS)
-    texts = {'coin': 'Grab the coins', 'kill': 'Shoot the spectres: +5 coins each',
-             'life': 'Defeat them all: an extra heart!', 'hurt': 'Three hearts... be careful'}
+    texts = {'coin': 'Grab the coins', 'kill': 'Shoot the spectres: +5 seconds each',
+             'life': 'Shields and hearts from level 3', 'hurt': 'Three hearts... be careful'}
     shown = {k: 0 for k in texts}
     limit = {'coin': 1, 'kill': 2, 'life': 1, 'hurt': 1}
     for i, kind in s.events:
@@ -508,9 +567,11 @@ def make_trailer(s, path, cover):
         used.update(idx)
         shown[kind] += 1
         budget -= len(idx)
-    clear = lit(s, frames_with(s, 'clear'))
+    medal = lit(s, frames_with(s, 'medal'))
+    summary = lit(s, frames_with(s, 'summary'))
     end = lit(s, frames_with(s, 'end'))
-    clips.append((clear[:int(1.5 * FPS)] + end[:int(3 * FPS)], 'Reach the portal before time runs out'))
+    clips.append((medal[:int(3 * FPS)], 'Defeat every spectre: win the level medal'))
+    clips.append((summary[:int(2 * FPS)] + end[:int(2.5 * FPS)], 'Ten mazes, beat your best times'))
 
     proc = subprocess.Popen(['ffmpeg', '-y', '-loglevel', 'error', '-f', 'rawvideo', '-pix_fmt', 'rgb24',
                              '-s', f'{W}x{H}', '-r', str(FPS), '-i', '-', '-c:v', 'libx264',
@@ -548,7 +609,7 @@ def main():
     s = play()
     res = {0: 'jugando', 1: 'nivel superado', 2: 'sin corazones', 3: 'sin tiempo', 4: 'VICTORIA'}
     print(f"  {len(s.frames)} frames grabados; eventos: {[k for _, k in s.events]}")
-    print(f"  final: {res.get(s.v('game_result'))}, monedas {s.v('coins'):X}, "
+    print(f"  final: {res.get(s.v('game_result'))}, monedas {s.v('total_coins'):X}{s.v('total_coins', 1):02X}, "
           f"espectros {s.v('kills'):X}, corazones {s.v('hearts')}, frames lentos: {s.slow_frames}")
 
     game = lit(s, frames_with(s, 'game'))
