@@ -5,13 +5,16 @@ IF !DEF(GAME_INC)
 DEF GAME_INC = 1
 
 INCLUDE "man/man_entity.inc"
+INCLUDE "assets/levels/level_count.inc"
 
 ;; KIND (one bit per kind, so a mask can select several)
-DEF KIND_GUN    = %10000
-DEF KIND_PLAYER = %0001
-DEF KIND_SHOT   = %0010
-DEF KIND_ENEMY  = %0100
-DEF KIND_PORTAL = %1000
+DEF KIND_PLAYER = %0000001
+DEF KIND_SHOT   = %0000010
+DEF KIND_ENEMY  = %0000100
+DEF KIND_PORTAL = %0001000
+DEF KIND_GUN    = %0010000    ;; things the hero picks up:
+DEF KIND_SHIELD = %0100000    ;;   it stops one hit of a spectre
+DEF KIND_HEART  = %1000000    ;;   a heart more (or HEART_TIME_BONUS seconds)
 
 ;; The hero is always the first entity created after man_entity_init
 DEF PLAYER_ENTITY EQUS "entity_array"
@@ -21,7 +24,7 @@ DEF PLAYER_ENTITY EQUS "entity_array"
 ;;--------------------------------------------------------------
 DEF HEARTS_START    = 3       ;; hearts at the start of a game
 DEF HEARTS_MAX      = 5       ;; most hearts (and cells of the HUD)
-DEF NUM_LEVELS      = 3       ;; levels in LevelTable (assets/levels/levels.asm)
+                              ;; NUM_LEVELS: assets/levels/level_count.inc (generated)
 DEF WALK_SPEED      = 1       ;; pixels per frame of anything that walks
 DEF SHOT_SPEED      = 3       ;; pixels per frame of a bullet
 DEF SHOT_FRAMES     = 60      ;; frames a bullet lives if it hits nothing
@@ -37,9 +40,14 @@ DEF AI_SLOW_MASK    = %00000011 ;; a slow spectre skips 1 frame of 4
 DEF ANIM_STEP_MASK  = %00001000 ;; bit 3 of TICK: the step changes every 8 frames
 DEF HIT_H           = 12      ;; two entities touch if |dY| < HIT_H and |dX| < HIT_W
 DEF HIT_W           = 12
-DEF KILL_REWARD     = $05     ;; coins (BCD) for each spectre
-DEF LEVEL_TIME_HI   = $01     ;; seconds for each level (BCD): $0120 = 120
-DEF LEVEL_TIME_LO   = $20
+DEF KILL_TIME_BONUS = $05     ;; seconds (BCD) for each spectre defeated
+DEF HEART_TIME_BONUS = $15    ;; seconds (BCD) of a heart picked up with all the hearts
+DEF TIME_MAX_HI     = $09     ;; the clock never goes over 999 seconds
+DEF PICKUPS_LEVEL   = 2       ;; the shield and the heart appear from level 3 (index 2)
+DEF GUN_NEAR_MIN    = 3      ;; the gun, near the hero: from 3 to 9 tiles WALKING
+DEF GUN_NEAR_MAX    = 9      ;;   (a room is 3 tiles: 1 to 3 rooms away)
+DEF PICKUP_MIN_DIST = 16      ;; the shield and the heart, at least 16
+DEF PICKUP_TRIES    = 200     ;; random places tried before giving up
 DEF FRAMES_PER_SEC  = 60
 DEF CORNER_ASSIST   = 5       ;; pixels the hero slides to get round a corner
 
@@ -67,7 +75,7 @@ DEF FEET_BOTTOM = 15
 DEF VIEW_HEIGHT  = 144 - 8                     ;; the HUD takes the last row
 DEF CAM_OFFSET_X = (160 - IMAGE_WIDTH) / 2     ;; 72
 DEF CAM_OFFSET_Y = (VIEW_HEIGHT - IMAGE_HEIGHT) / 2   ;; 60
-DEF CAM_MAX_X    = 256 - 160                   ;; 96
-DEF CAM_MAX_Y    = 256 - VIEW_HEIGHT           ;; 120
+;; The maximum of the camera depends on the size of the map (cam_max_x, cam_max_y):
+;;   width * 8 - 160 and height * 8 - VIEW_HEIGHT (0 if the map is smaller)
 
 ENDC

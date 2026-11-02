@@ -22,6 +22,8 @@ mus_mel_ptr:    ds 2                  ;; next pair of each voice (high byte 0: s
 mus_mel_wait:   ds 1                  ;; frames left of the current note
 mus_bass_ptr:   ds 2
 mus_bass_wait:  ds 1
+music_tempo::   ds 1                  ;; ticks of the song per 4 frames: TEMPO_NORMAL...
+mus_tempo_acc:  ds 1                  ;; quarters of a tick not played yet
 
 SECTION "Sound", ROM0
 
@@ -120,6 +122,10 @@ music_play::
     ld   a, 1                         ;; \ The first note sounds in the next update
     ld   [mus_mel_wait], a            ;; |
     ld   [mus_bass_wait], a           ;; /
+    ld   a, TEMPO_NORMAL              ;; \ Every song starts at its normal speed
+    ld   [music_tempo], a             ;; |
+    xor  a                            ;; |
+    ld   [mus_tempo_acc], a           ;; /
     ld   a, $80                       ;; (channel 3 on)
     ldh  [rAUD3ENA], a
     ret
@@ -142,7 +148,11 @@ music_mute:
     ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Once per frame: plays the next note of each voice when the current one ends.
+;; Once per frame. The tempo: every frame music_tempo quarters of a tick are
+;; added; each full tick (4 quarters) advances the song one frame of its notes.
+;; TEMPO_NORMAL (4) = 1 tick per frame: the song as it is written.
+;; 5 = 1.25 times faster, 6 = 1.5 times faster (2 ticks in some frames).
+;; The volume never changes: only the speed.
 ;; ❌ Modifies A, BC, DE, HL
 music_update::
     ld   a, [music_choice]            ;; \ Music off in the menu, or paused: silence
@@ -151,6 +161,21 @@ music_update::
     ld   a, [music_pause]             ;; |
     or   a                            ;; |
     jp   nz, music_mute               ;; /
+    ld   a, [music_tempo]             ;; \ acc += tempo
+    ld   hl, mus_tempo_acc            ;; |
+    add  [hl]                         ;; |
+    ld   [hl], a                      ;; /
+.tick
+    ld   a, [mus_tempo_acc]           ;; \ A full tick?
+    cp   TEMPO_NORMAL                 ;; |
+    ret  c                            ;; /
+    sub  TEMPO_NORMAL                 ;; \ acc -= 1 tick
+    ld   [mus_tempo_acc], a           ;; /
+    call music_tick
+    jr   .tick
+
+;; One tick: the waits go down, and a voice whose note has ended plays the next one.
+music_tick:
     ld   a, [mus_mel_ptr + 1]         ;; \ Melody
     or   a                            ;; | (stopped if the high byte is 0)
     jr   z, .bass                     ;; |

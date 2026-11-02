@@ -17,13 +17,37 @@ SECTION "Map manager", ROM0
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Loads a map: it is copied to map_ram and to the background of the screen.
-;; 📥 HL = map in the ROM (MAP_SIZE tiles)
+;; A map can be smaller than 32 x 32: it is stored by rows of its own width,
+;; and the rest of map_ram (and of the screen) is filled with TILE_WALL_EDGE,
+;; a solid tile. map_ram always has rows of MAP_WIDTH (32) tiles, so
+;; map_tile_address works the same for every map.
+;; 📥 HL = map in the ROM, B = width, C = height (tiles)
 ;; ⚠️ The screen must be OFF
 ;; ❌ Modifies A, BC, DE, HL
 map_load::
-    ld   de, map_ram                  ;; \ ROM -> map_ram
+    push hl                           ;; \ map_ram all solid
+    push bc                           ;; |
+    ld   hl, map_ram                  ;; |
     ld   bc, MAP_SIZE                 ;; |
-    call memcpy16                     ;; /
+    ld   a, TILE_WALL_EDGE            ;; |
+    call memset16                     ;; |
+    pop  bc                           ;; |
+    pop  hl                           ;; /
+    ld   de, map_ram
+.row
+    push bc                           ;; \ One row: B tiles
+    push de                           ;; |
+    call memcpy8                      ;; | (HL -> the next row of the ROM map)
+    pop  de                           ;; |
+    pop  bc                           ;; /
+    ld   a, e                         ;; \ DE = the next row of map_ram (+32)
+    add  MAP_WIDTH                    ;; |
+    ld   e, a                         ;; |
+    adc  d                            ;; |
+    sub  e                            ;; |
+    ld   d, a                         ;; /
+    dec  c
+    jr   nz, .row
     ld   hl, map_ram                  ;; \ map_ram -> background
     ld   de, TILEMAP                  ;; |
     ld   bc, MAP_SIZE                 ;; |

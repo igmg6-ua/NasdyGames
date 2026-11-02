@@ -17,6 +17,7 @@ DEF ITEM_LANG   RB 1
 DEF ITEM_HERO   RB 1
 DEF ITEM_MUSIC  RB 1
 DEF ITEM_NAME   RB 1
+DEF ITEM_MEDALS RB 1
 DEF ITEM_PLAY   RB 1
 DEF ITEM_COUNT  RB 0
 DEF FIRST_ITEM_ROW = 4                ;; item i is in row 4 + 2 * i
@@ -85,9 +86,16 @@ scn_setup_update:
 setup_menu_update:
     ld   a, [input_pressed]
     ld   b, a
-    bit  BTN_START_BIT, b             ;; \ START: play, from any item
-    jr   nz, setup_play               ;; /
     ld   hl, setup_sel
+    bit  BTN_START_BIT, b             ;; \ START: play, from any item...
+    jr   z, .not_start                ;; |
+    ld   a, [hl]                      ;; | ...but on the name and on the
+    cp   ITEM_NAME                    ;; | medallions it does the same as A
+    jr   z, .name                     ;; | (write the name / see them)
+    cp   ITEM_MEDALS                  ;; |
+    jr   z, .medals                   ;; |
+    jr   setup_play                   ;; /
+.not_start
     bit  BTN_UP_BIT, b                ;; \ UP: the item above (the last one, from the first)
     jr   z, .not_up                   ;; |
     ld   a, [hl]                      ;; |
@@ -126,6 +134,14 @@ setup_menu_update:
     ret  z                            ;; /
     cp   ITEM_PLAY
     jr   z, setup_play
+    cp   ITEM_MEDALS                  ;; \ The medallions: their screen
+    jr   nz, .name                    ;; |
+.medals                               ;; |
+    ld   a, SFX_MENU                  ;; |
+    call sfx_play                     ;; |
+    ld   hl, scn_medals_init          ;; |
+    jp   scene_request                ;; /
+.name
     jp   setup_edit_start
 .language
     ld   hl, language
@@ -253,6 +269,8 @@ setup_edit_update:
 setup_edit_end:
     xor  a
     ld   [setup_edit], a
+    ld   a, ITEM_PLAY                 ;; The cursor, on PLAY: START (or A) and to play
+    ld   [setup_sel], a
     ld   hl, player_name + NAME_LETTERS - 1
     ld   b, NAME_LETTERS
 .trim
@@ -349,7 +367,7 @@ setup_draw_next:
 
 ;; The routine that builds each line
 SetupLines:
-    dw line_language, line_hero, line_music, line_name, line_play
+    dw line_language, line_hero, line_music, line_name, line_medals, line_play
     dw line_title, line_help
 ASSERT @ - SetupLines == LINE_COUNT * 2
 
@@ -386,6 +404,11 @@ line_music:
     jr   nz, put_value
     ld   de, TxtOff
     jr   put_value
+
+line_medals:
+    ITEM_ROW ITEM_MEDALS
+    ld   de, TxtMedals
+    jr   put_label
 
 line_play:
     ITEM_ROW ITEM_PLAY

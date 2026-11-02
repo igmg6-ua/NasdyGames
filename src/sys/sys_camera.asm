@@ -3,10 +3,13 @@
 ;;==============================================================
 INCLUDE "scn/scn_game.inc"
 INCLUDE "engine/macros.inc"
+INCLUDE "man/man_map.inc"
 
 SECTION "Camera vars", WRAM0
 cam_y::         ds 1                  ;; the pixel of the world at the top left
 cam_x::         ds 1                  ;; of the screen
+cam_max_y::     ds 1                  ;; the largest camera: it depends on the size of the map
+cam_max_x::     ds 1                  ;; (sys_camera_set_limits)
 
 SECTION "Camera", ROM0
 
@@ -46,16 +49,61 @@ camera_axis::
 ;; ❌ Modifies A, BC, HL
 sys_camera_update::
     FIELD_HL E_Y                      ;; HL = &entity.Y
-    ld   a, [hl+]                     ;; \ cam_y = camera_axis(Y)
+    ld   a, [cam_max_y]               ;; \ cam_y = camera_axis(Y)
+    ld   c, a                         ;; |
     ld   b, CAM_OFFSET_Y              ;; |
-    ld   c, CAM_MAX_Y                 ;; |
+    ld   a, [hl+]                     ;; | (HL -> X)
     call camera_axis                  ;; |
     ld   [cam_y], a                   ;; /
-    ld   a, [hl]                      ;; \ cam_x = camera_axis(X)
+    ld   a, [cam_max_x]               ;; \ cam_x = camera_axis(X)
+    ld   c, a                         ;; |
     ld   b, CAM_OFFSET_X              ;; |
-    ld   c, CAM_MAX_X                 ;; |
+    ld   a, [hl]                      ;; |
     call camera_axis                  ;; |
     ld   [cam_x], a                   ;; /
+    ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; The limits of the camera for a map: it never shows what is outside it
+;; (if the map is smaller than the screen, the camera stays at 0).
+;;    cam_max_x = width * 8 - 160          cam_max_y = height * 8 - VIEW_HEIGHT
+;; 📥 B = width, C = height (tiles)
+;; ❌ Modifies A
+sys_camera_set_limits::
+    ld   a, b                         ;; \ X
+    call .pixels                      ;; |
+    jr   z, .x_full                   ;; | (0: the full 256 pixels)
+    sub  SCREEN_WIDTH                 ;; |
+    jr   nc, .x_ok                    ;; |
+    xor  a                            ;; |
+    jr   .x_ok                        ;; |
+.x_full                               ;; |
+    ld   a, LOW(-SCREEN_WIDTH)        ;; |
+.x_ok                                 ;; |
+    ld   [cam_max_x], a               ;; /
+    ld   a, c                         ;; \ Y
+    call .pixels                      ;; |
+    jr   z, .y_full                   ;; |
+    sub  VIEW_HEIGHT                  ;; |
+    jr   nc, .y_ok                    ;; |
+    xor  a                            ;; |
+    jr   .y_ok                        ;; |
+.y_full                               ;; |
+    ld   a, LOW(-VIEW_HEIGHT)         ;; |
+.y_ok                                 ;; |
+    ld   [cam_max_y], a               ;; /
+    ret
+;; A = tiles * 8, NZ. A map of 32 tiles (256 pixels, that do not fit in a
+;; byte) gives Z instead: its maximum is set apart (256 - 160 = 96).
+.pixels
+    cp   MAP_WIDTH                    ;; \ 32 tiles: Z
+    jr   nc, .full                    ;; /
+    add  a                            ;; \ * 8 (never 0: NZ)
+    add  a                            ;; |
+    add  a                            ;; /
+    ret
+.full
+    xor  a
     ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

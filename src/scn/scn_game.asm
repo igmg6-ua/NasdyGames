@@ -82,10 +82,24 @@ game_ending_start:
     jp   music_play
 
 ;; After the moment of waiting: the next screen.
+;;   level cleared -> (the medallion, if it was won) -> the summary of the level
+;;   dead or no time -> the end
 game_next_scene:
     ld   a, [game_result]
     cp   RESULT_CLEAR
-    jr   nz, .the_end                 ;; dead or no time: the end
+    ld   hl, scn_end_init             ;; \ Dead or no time: the end
+    jp   nz, scene_request            ;; /
+    ld   a, [level_medal]             ;; \ The medallion first, if it was won
+    or   a                            ;; |
+    ld   hl, scn_medal_init           ;; |
+    jp   nz, scene_request            ;; /
+    ld   hl, scn_clear_init
+    jp   scene_request
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; After the summary of a level: the next level, or the end (victory) after
+;; the last one. ❌ Modifies A, HL
+game_after_summary::
     ld   a, [current_level]           ;; \ The next level...
     inc  a                            ;; |
     ld   [current_level], a           ;; |
@@ -93,10 +107,9 @@ game_next_scene:
     ld   hl, scn_level_init           ;; |
     jp   c, scene_request             ;; /
     ld   a, RESULT_VICTORY            ;; \ ...or there is none: victory
-    ld   [game_result], a             ;; /
-.the_end
-    ld   hl, scn_end_init
-    jp   scene_request
+    ld   [game_result], a             ;; |
+    ld   hl, scn_end_init             ;; |
+    jp   scene_request                ;; /
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Pause: the HUD says it, the music is silent and nothing moves.

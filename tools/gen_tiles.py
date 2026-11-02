@@ -187,8 +187,32 @@ def main():
         for t in split16(big_glyph(FONT[ch])):
             put(i, None, t)
             i += 1
+    # Medallón pequeño (16x16, para el fondo): conseguido y sin conseguir
+    for nm, img in (('TILE_MEDAL', S.MEDAL_SMALL), ('TILE_MEDAL_LOCKED', S.MEDAL_LOCKED)):
+        names[nm] = i
+        for t in split16(img):
+            put(i, None, t)
+            i += 1
     assert i <= 256, i
     n = i
+
+    # Medallón grande girando (32x32 = 8 sprites de 8x16 por imagen). No cabe
+    # con el resto: la escena del medallón lo copia sobre las hojas de personajes.
+    spin = S.medal_spin_frames()
+    with open(os.path.join(SRC, 'assets', 'gfx', 'medal.asm'), 'w') as f:
+        f.write(';; GENERADO por tools/gen_tiles.py -- no editar a mano\n')
+        f.write(';; El medallón grande girando: imagen k = tiles k*16 .. k*16+15.\n')
+        f.write(';; Sprite (columna c, fila r) de 8x16 = tiles (r * 4 + c) * 2 y +1.\n\n')
+        f.write('SECTION "Medal spin tiles", ROMX\n\nMedalSpinTiles::\n')
+        for k, img in enumerate(spin):
+            for r in range(2):
+                for c in range(4):
+                    for half in range(2):
+                        y0 = r * 16 + half * 8
+                        rows = [row[c * 8:c * 8 + 8] for row in img[y0:y0 + 8]]
+                        f.write(f'    db {", ".join(f"${b:02X}" for b in encode(rows))} ;; img {k} c{c} r{r}\n')
+        f.write('MedalSpinTilesEnd::\n')
+    names['MEDAL_SPIN_FRAMES'] = len(spin)
 
     with open(os.path.join(SRC, 'assets', 'gfx', 'tiles.asm'), 'w') as f:
         f.write(';; GENERADO por tools/gen_tiles.py -- no editar a mano\n\n')
@@ -219,6 +243,10 @@ def main():
         for nm, t in sheets.items():
             f.write(f'DEF TILE_{nm} = {t}\n')
         f.write(f"DEF TILE_CURSOR = {names['TILE_CURSOR']}\n")
+        f.write(f"DEF TILE_MEDAL = {names['TILE_MEDAL']}\n")
+        f.write(f"DEF TILE_MEDAL_LOCKED = {names['TILE_MEDAL_LOCKED']}\n")
+        f.write(f"DEF MEDAL_SPIN_FRAMES = {names['MEDAL_SPIN_FRAMES']}\n")
+        f.write("DEF MEDAL_SPIN_TILE = TILE_BOY  ;; where the spin is copied (medal scene)\n")
         f.write('DEF TILES_PER_IMAGE = 4\nDEF SHEET_ROW_TILES = 2 * TILES_PER_IMAGE\n\n')
         f.write(';; Logo de la portada: cada letra son 4 tiles (2 columnas de 8x16)\n')
         for ch, t in logo.items():
