@@ -53,7 +53,7 @@ DEF WALK_FIRST = TILEMAP_WIDTH + 1     ;; the places looked at: from row 1, colu
 DEF WALK_LAST  = MAP_SIZE - 2 * TILEMAP_WIDTH ;; to row 29 (their feet, in row 30 at most)
 
 SECTION "Walk distances", WRAM0
-walk_dist:      ds MAP_SIZE           ;; tiles the hero walks to each place (game_spawn_near)
+walk_dist::      ds MAP_SIZE           ;; tiles the hero walks to each place (game_spawn_near)
 
 SECTION "Game rules", ROM0
 
