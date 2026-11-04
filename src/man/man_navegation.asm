@@ -20,7 +20,7 @@ SECTION "Navigation", ROM0
 
 
 
-navegation_init:
+navegation_init::
 	xor a
 	ld [nav_read], a
 	ld [nav_write], a
