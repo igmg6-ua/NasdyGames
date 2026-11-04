@@ -10,43 +10,40 @@ DEF CN = TILE_COIN
 DEF WT = TILE_WALL_TOP
 DEF WF = TILE_WALL_FRONT
 
-;; ---- nivel1.txt: 19x19 tiles, 5 monedas, 2 espectros, 90 s
+;; ---- nivel1.txt: 19x15 tiles, 0 monedas, 3 espectros, 70 s
 SECTION "Level1 map", ROMX
 Level1Map::
-    db WT,WF,WF,WT,WF,WF,WF,WF,WF,WT,WF,WF,WF,WF,WF,WF,WF,WF,WT
-    db WT,FL,FL,WT,FL,FL,FL,FL,FC,WT,FB,FL,FL,FL,FL,FL,FL,FL,WT
-    db WT,FL,FL,WT,FL,FL,FL,FL,CN,WT,FC,FL,FB,FL,FL,FL,FL,FL,WT
-    db WT,FB,FL,WT,FL,FL,WF,WF,WF,WF,FL,FL,WF,FL,FB,WT,FL,FL,WT
-    db WT,FC,FL,WT,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FC,WT,FB,FL,WT
-    db WT,FL,FL,WT,FL,FB,FL,FL,FL,FL,FL,FL,FL,FL,FL,WT,FC,FL,WT
-    db WT,FL,FL,WF,FL,FC,WF,WF,WF,WF,FL,FL,WF,FL,FL,WF,FL,FL,WT
-    db WT,FL,FL,FL,FL,FL,FL,FC,FL,FB,FL,FL,FL,FL,FL,FL,FL,FL,WT
-    db WT,FL,FL,FL,FL,CN,FL,FL,FL,FC,FL,FB,FL,FL,FL,FL,FL,FL,WT
-    db WT,FL,FL,WF,FL,FL,WT,WF,WF,WT,WF,WF,WF,FB,FL,WF,FL,FL,WT
-    db WT,FL,FB,FL,FL,FL,WT,FL,FL,WT,FL,FL,FL,FC,FL,FB,FL,FL,WT
-    db WT,FL,FC,FL,FB,FL,WT,FL,CN,WT,FL,FL,FL,FL,FL,FC,FL,FB,WT
-    db WT,WF,WF,WF,WF,WF,WF,FL,FL,WT,FL,FL,WT,WF,WF,WF,FL,FC,WT
-    db WT,FL,FL,FL,FL,FL,FC,FL,FB,WT,FL,FL,WT,FL,FL,FL,FL,FL,WT
-    db WT,FL,FL,FL,FL,FL,FL,FL,FC,WT,FB,FL,WT,CN,FL,FL,FL,FL,WT
-    db WT,FL,FL,WF,FL,FL,WT,FL,FL,WF,FC,FL,WF,WF,WF,WF,FL,FL,WT
-    db WT,FB,FL,FL,FL,FL,WT,FL,FL,FL,FL,FL,FC,FL,FB,FL,FL,FL,WT
-    db WT,FC,FL,FB,CN,FL,WT,FL,FL,FL,FL,FL,FL,FL,FC,FL,FB,FL,WT
+    db WT,WF,WF,WF,WF,WF,WF,WF,WF,WF,WF,WF,WF,WF,WF,WF,WF,WF,WT
+    db WT,FL,FL,FL,FL,FL,FL,FL,FC,FL,FB,FL,FL,FL,FL,FL,FL,FL,WT
+    db WT,FL,FL,FL,FL,FL,FL,FL,FL,FL,FC,FL,FB,FL,FL,FL,FL,FL,WT
+    db WT,FB,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FC,FL,FB,FL,FL,FL,WT
+    db WT,FC,FL,FB,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FC,FL,FB,FL,WT
+    db WT,FL,FL,FC,FL,FB,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FC,FL,WT
+    db WT,FL,FL,FL,FL,FC,FL,FB,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,WT
+    db WT,WF,WF,WF,WF,WF,WF,WF,WF,WF,WF,WF,WF,FL,FL,FL,FL,FL,WT
+    db WT,FL,FL,FL,FL,FL,FL,FL,FL,FC,FL,FB,FL,FL,FL,FL,FL,FL,WT
+    db WT,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FC,FL,FB,FL,FL,FL,FL,WT
+    db WT,FL,FB,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FC,FL,FB,FL,FL,WT
+    db WT,FL,FC,FL,FB,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FC,FL,FB,WT
+    db WT,FL,FL,FL,FC,FL,FB,FL,FL,FL,FL,FL,FL,FL,FL,FL,FL,FC,WT
+    db WT,FL,FL,FL,FL,FL,FC,FL,FB,FL,FL,FL,FL,FL,FL,FL,FL,FL,WT
     db WT,WT,WT,WT,WT,WT,WT,WT,WT,WT,WT,WT,WT,WT,WT,WT,WT,WT,WT
 
 SECTION "Level1 data", ROMX
 Level1::
     dw Level1Map             ;; LVL_MAP
     dw SongLevel1           ;; LVL_SONG
-    db 19, 19                ;; LVL_WIDTH, LVL_HEIGHT (tiles)
-    db 1, 1               ;; LVL_PLAYER_TX, LVL_PLAYER_TY (columna, fila)
-    db 1, 16               ;; LVL_EXIT_TX, LVL_EXIT_TY
-    db $00, $90          ;; LVL_TIME: 90 s (BCD, el byte alto primero)
-    db $00, $45          ;; LVL_TIME_HALF: 45 s (música más rápida)
-    db $00, $30          ;; LVL_TIME_THIRD: 30 s (todavía más)
-    db 0, 0                ;; LVL_AI_EVEN, LVL_AI_ODD
-    db 2                  ;; LVL_ENEMIES, y cada uno: columna, fila
-    db 10, 7
-    db 7, 13
+    db 19, 15                ;; LVL_WIDTH, LVL_HEIGHT (tiles)
+    db 7, 3               ;; LVL_PLAYER_TX, LVL_PLAYER_TY (columna, fila)
+    db 1, 1               ;; LVL_EXIT_TX, LVL_EXIT_TY
+    db $00, $70          ;; LVL_TIME: 70 s (BCD, el byte alto primero)
+    db $00, $35          ;; LVL_TIME_HALF: 35 s (música más rápida)
+    db $00, $23          ;; LVL_TIME_THIRD: 23 s (todavía más)
+    db 1, 1                ;; LVL_AI_EVEN, LVL_AI_ODD
+    db 3                  ;; LVL_ENEMIES, y cada uno: columna, fila
+    db 5, 9
+    db 8, 9
+    db 11, 9
 
 ;; ---- nivel2.txt: 22x19 tiles, 4 monedas, 2 espectros, 100 s
 SECTION "Level2 map", ROMX
