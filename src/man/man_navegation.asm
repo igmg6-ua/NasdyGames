@@ -4,10 +4,28 @@ INCLUDE "scn/scn_game.inc"
 DEF NAV_UNVISITED = $FF
 DEF NAV_TARGET    = $FE
 
+
+
+SECTION "Navigation queue", WRAMX[$D000], BANK[1]
+	nav_queue: ds MAP_SIZE * 2
+
+
+SECTION "Navigation vars", WRAM0
+
+	nav_read:  ds 2
+	nav_write: ds 2
+
+
 SECTION "Navigation", ROM0
 
 
+
 navegation_init:
+	xor a
+	ld [nav_read], a
+	ld [nav_write], a
+	ld [nav_write + 1], a
+	ld [nav_read + 1], a
 	ld hl, walk_dist
 	ld bc, MAP_SIZE
 	ld a, NAV_UNVISITED
