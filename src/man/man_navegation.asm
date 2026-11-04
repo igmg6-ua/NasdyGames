@@ -63,6 +63,14 @@ navegation_init:
 	ld b, 0
 	ld c, a
 	add hl, bc
+
+	ld a, l
+	ld [nav_queue], a
+	ld a, h
+	ld [nav_queue + 1], a
+	ld a, 1
+	ld [nav_write], a
+
 	ld bc, walk_dist
 	add hl, bc
 
