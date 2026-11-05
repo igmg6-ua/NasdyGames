@@ -75,7 +75,60 @@ navegation_init::
 	add hl, bc
 
 	ld [hl], NAV_TARGET
+	call navegation_read_queue
+	call navegation_read_queue
 	ret
+
+navegation_read_queue:
+	ld a, [nav_read]
+	ld l, a
+
+
+	ld a, [nav_write]
+	ld c, a
+
+	cp l
+	jr nz, .fine
+	
+	ld a, [nav_write + 1]
+	ld b, a
+
+	ld a, [nav_read + 1]
+	ld h, a
+	cp b
+	jr nz, .different
+
+	jr z, .empty
+	.fine
+		ld a, [nav_read +1]
+		ld h, a
+	.different
+		push hl
+
+		ld bc, nav_queue
+		add hl, hl
+		add hl, bc
+
+		ld a, [hl+]
+		ld e, a
+		ld a, [hl]
+		ld d, a
+
+		pop hl
+		inc hl
+
+
+		ld a, l
+		ld [nav_read], a
+		ld a, h
+		ld [nav_read + 1], a
+		xor a 
+		ret
+
+	.empty
+		ld a,1
+		sub a, 2
+		ret
 
 
 
