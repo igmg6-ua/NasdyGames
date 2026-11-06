@@ -34,7 +34,7 @@ make clean              # borra obj/
 - **Música:** cuando queda la mitad del tiempo se acelera, y cuando queda un tercio, un poco más.
 - **Pistola:** al empezar cada nivel aparece cerca de ti, en un sitio aleatorio al que llegas andando entre 3 y 9 tiles (1 a 3 salas). Sin ella no puedes disparar.
 - **Corazones:** empiezas con 3 (máximo 5). Si un espectro te toca pierdes uno y parpadeas un momento. Sin corazones, fin de la partida.
-- **Espectros:** cada uno derrotado da **+5 segundos**. Su comportamiento cambia con el nivel: deambulan, te persiguen o son rápidos.
+- **Espectros:** cada uno derrotado da **+5 segundos**. Su comportamiento cambia con el nivel: deambulan, te persiguen o son rápidos. Los cazadores comparten una tabla de navegación para rodear paredes; se actualiza por partes mientras siguen el último recorrido completo. Los enemigos mantienen separación entre sus cuerpos y prueban desvíos al bloquearse.
 - **Medallón:** si derrotas a **todos** los espectros de un nivel ganas su medallón: lo ves girar al acabar el nivel y queda guardado. En el menú, **MEDALLONES** muestra los 10 (los que faltan, en silueta).
 - **Desde el nivel 3**, en cada nivel aparecen en un sitio aleatorio (lejos de ti):
   - **Escudo:** para el siguiente golpe de un espectro y se pierde.
@@ -45,6 +45,12 @@ make clean              # borra obj/
 Pantallas: portada → menú (idioma ES/EN, chico/chica, música sí/no, nombre de hasta 8 letras,
 medallones) → nivel 1 → juego → [medallón] → resumen → nivel 2 → … → final (victoria o fin
 de la partida) → portada.
+
+## Navegación
+
+Los cazadores comparten una tabla de rutas para rodear paredes. Se reconstruye por partes mientras siguen la última tabla completa, por lo que existe retardo al cambiar el destino. Los enemigos mantienen separación entre cuerpos y prueban desvíos al bloquearse; pueden quedar esperas en pasos estrechos.
+
+Se conservan los diez mapas reequilibrados: el primero tiene cuatro islas de paredes y rutas alternativas; los demás incorporan pequeños atajos. La mezcla de enemigos incluye perseguidores y patrulleros. El mapa temporal y los archivos de diagnóstico se retiraron de esta versión.
 
 ## Estructura (`src/`)
 
