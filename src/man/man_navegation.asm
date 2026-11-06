@@ -348,3 +348,9 @@ navigation_step:
 		xor a 
 		cp 1
 		ret
+
+navegation_build::
+	.repeat
+		call navigation_step
+		jr nc, .repeat
+		ret
