@@ -115,61 +115,160 @@ sys_ai_update::
     jp   man_entity_forall_matching
 
 
+;; DE apunta al enemigo y se conserva. La fisica mueve; aqui solo se elige rumbo.
+;; Entre tiles se mantiene la velocidad para no girar cortando una esquina.
+;; En nodos se consulta la ultima tabla terminada, nunca el buffer en construccion.
 sys_ai_follow_navigation::
-
-    ;; Seguir consultando la ultima tabla completa, incluso durante una BFS.
-
+    ;; Un bloqueo entre tiles no debe impedir girar para siempre.
+    FIELD_HL E_AI_WAIT
+    ld a, [hl]
+    cp ENEMY_STUCK
+    jr c, .check_yield
+    ld [hl], 0
+    FIELD_HL E_AI_YIELD
+    ld [hl], ENEMY_YIELD
     FIELD_HL E_X
     ld a, [hl]
     and 7
-    jr nz, .end
-
+    jr z, .recover_y
+    ld b, DIR_RIGHT
+    cp 4
+    jr nc, .recover_test
+    ld b, DIR_LEFT
+    jr .recover_test
+.recover_y
     FIELD_HL E_Y
     ld a, [hl]
     and 7
-    jr nz, .end
-
+    ld b, DIR_DOWN
+    cp 4
+    jr nc, .recover_test
+    ld b, DIR_UP
+.recover_test
+    push bc
+    call sys_physics_walk
+    FIELD_HL E_VY
+    ld a, [hl+]
+    ld b, a
+    ld c, [hl]
+    call sys_physics_blocked
+    pop bc
+    jr z, .recover_walk
+    ld a, b
+    xor 1
+    ld b, a
+.recover_walk
+    call sys_physics_walk
+.check_yield
+    FIELD_HL E_AI_YIELD
+    ld a, [hl]
+    or a
+    jr z, .alignment
+    dec [hl]
+    ;; Entre tiles se mantiene la retirada; alineado puede buscar un lateral.
+    FIELD_HL E_X
+    ld a, [hl]
+    and 7
+    ret nz
+    FIELD_HL E_Y
+    ld a, [hl]
+    and 7
+    ret nz
+    ld a, [frame_counter]
+    rrca
+    rrca
+    rrca
+    add e
+    and DIR_MASK
+    ld b, a
+    jp sys_ai_detour
+.alignment
+    FIELD_HL E_X
+    ld a, [hl]
+    and 7
+    ret nz
+    FIELD_HL E_Y
+    ld a, [hl]
+    and 7
+    ret nz
+    ;; Repartir decisiones por entidad para reducir picos cuando se agrupan.
+    ld a, e
+    swap a
+    and 3
+    jr nz, .phase_ready
+    inc a                            ;; fase 0 descansa en la fisica de espectros lentos
+.phase_ready
+    ld c, a
+    ld a, [frame_counter]
+    and 3
+    cp c
+    jp nz, sys_physics_stop
     FIELD_HL E_Y
     ld a, [hl]
     srl a
     srl a
     srl a
     ld b, a
-
     FIELD_HL E_X
     ld a, [hl]
     srl a
     srl a
     srl a
     ld c, a
-
     ld l, b
     ld h, 0
     add hl, hl
-    add hl ,hl
     add hl, hl
     add hl, hl
     add hl, hl
-    
+    add hl, hl
     ld b, 0
-    add hl, bc 
-
+    add hl, bc
     ld a, [nav_active_ptr]
     ld c, a
     ld a, [nav_active_ptr + 1]
     ld b, a
     add hl, bc
-
     ld a, [hl]
     cp DIR_MASK + 1
-    jr nc, .not_valid
-
+    jp nc, sys_physics_stop
     ld b, a
-    call sys_physics_walk
-    ret 
+    jp sys_ai_detour
 
-    .not_valid
-        call sys_physics_stop
-        ret
-    .end
-        ret
+;; Probar primero la flecha; si otro enemigo ocupa el paso, buscar lateral
+;; o retirada. No hay teletransporte ni paso a traves de otros enemigos.
+;; BC se conserva alrededor de cada intento; DE sigue apuntando a la entidad.
+sys_ai_detour:
+    ld c, 4
+.try
+    push bc
+    call sys_ai_direction_free
+    pop bc
+    ret z
+    inc b
+    ld a, b
+    and DIR_MASK
+    ld b, a
+    dec c
+    jr nz, .try
+    jp sys_physics_stop
+
+;; DE = enemigo, B = direccion. Configura velocidad y comprueba el proximo
+;; nodo (8 px): pies libres y espacio respecto de otros enemigos.
+;; Z si viable, NZ si bloqueado. Modifica A, BC, HL; conserva DE.
+sys_ai_direction_free:
+    call sys_physics_walk
+    FIELD_HL E_VY
+    ld a, [hl+]
+    add a
+    add a
+    add a
+    ld b, a
+    ld a, [hl]
+    add a
+    add a
+    add a
+    ld c, a
+    call sys_physics_blocked
+    ret nz
+    jp sys_enemy_blocked

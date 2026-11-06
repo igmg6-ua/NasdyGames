@@ -49,6 +49,9 @@ DEF GUN_NEAR_MAX    = 9      ;;   (a room is 3 tiles: 1 to 3 rooms away)
 DEF PICKUP_MIN_DIST = 16      ;; the shield and the heart, at least 16
 DEF PICKUP_TRIES    = 200     ;; random places tried before giving up
 DEF FRAMES_PER_SEC  = 60
+DEF ENEMY_GAP       = 12      ;; separacion entre cuerpos (sprites tienen margen transparente)
+DEF ENEMY_STUCK     = 24      ;; intentos bloqueados antes de retroceder
+DEF ENEMY_YIELD     = 16      ;; frames de desvio tras un atasco
 DEF CORNER_ASSIST   = 5       ;; pixels the hero slides to get round a corner
 
 ;; How a level ends (game_result)
