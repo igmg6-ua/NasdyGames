@@ -117,6 +117,8 @@ sys_ai_update::
 
 sys_ai_follow_navigation::
 
+    ;; Seguir consultando la ultima tabla completa, incluso durante una BFS.
+
     FIELD_HL E_X
     ld a, [hl]
     and 7
@@ -152,7 +154,10 @@ sys_ai_follow_navigation::
     ld b, 0
     add hl, bc 
 
-    ld bc, walk_dist
+    ld a, [nav_active_ptr]
+    ld c, a
+    ld a, [nav_active_ptr + 1]
+    ld b, a
     add hl, bc
 
     ld a, [hl]

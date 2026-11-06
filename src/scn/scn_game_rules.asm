@@ -649,8 +649,7 @@ game_level_start::
     ld   h, [hl]                      ;; |
     ld   l, a                         ;; |
     call music_play
-    call navegation_init
-    call navegation_build                   ;; /
+    call navegation_start                   ;; /
 
     ld   de, PLAYER_ENTITY            ;; \ The camera on the hero, and the scroll
     call sys_camera_update            ;; | now (the screen is off)

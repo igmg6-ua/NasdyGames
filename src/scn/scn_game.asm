@@ -42,6 +42,7 @@ scn_game_update:
     ret  nz
 
     call sys_input_update
+    call navegation_update
     call sys_ai_update
     call sys_physics_update
     call sys_animation_update
