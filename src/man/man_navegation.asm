@@ -4,8 +4,6 @@ INCLUDE "scn/scn_game.inc"
 DEF NAV_UNVISITED = $FF
 DEF NAV_TARGET    = $FE
 
-
-
 SECTION "Navigation queue", WRAMX[$D000], BANK[1]
 	nav_queue: ds MAP_SIZE * 2
 
@@ -75,6 +73,20 @@ navegation_init::
 	add hl, bc
 
 	ld [hl], NAV_TARGET
+									;; TESTSper
+									;;ld a, $FF
+								    ;;ld [nav_write], a
+								    ;;ld a, $03
+								    ;;ld [nav_write + 1], a
+
+
+									;;ld a, $00
+									;;ld [nav_write], a
+									;;ld a, $04
+									;;ld [nav_write + 1], a
+
+									;;ld de, $0123
+									;;call navegation_add_queue
 	ret
 
 navegation_read_queue:
@@ -124,10 +136,60 @@ navegation_read_queue:
 		ret
 
 	.empty
-		ld a,1
-		sub a, 2
+		xor a
+		cp 1
 		ret
 
+
+navegation_add_queue:
+	
+	ld a, [nav_write]
+	ld l, a
+	ld a, [nav_write + 1]
+	ld h, a
+	push hl
+
+	cp HIGH(MAP_SIZE)
+	jr c, .cont
+	jr nz, .no_space
+
+	ld a, l
+	cp LOW(MAP_SIZE)
+	jr c, .cont
+	jr .no_space
+
+	.cont	
+		pop hl
+		push hl
+		
+		add hl, hl
+		
+		ld bc, nav_queue
+		
+		add hl, bc
+
+		
+		ld a, e
+		ld [hl+], a
+		ld a, d
+		ld [hl], a
+		
+		pop hl
+		inc hl
+		
+		ld a, l
+		ld [nav_write], a
+		ld a, h
+		ld [nav_write + 1], a 
+		
+		xor a
+		ret
+
+	.no_space
+		xor a
+		cp 1
+		pop hl
+		ret
 
 
 	
