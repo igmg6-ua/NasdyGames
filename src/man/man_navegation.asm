@@ -242,4 +242,45 @@ search_try_neighbor:
 		ret
 	.end
 		ret
+
+navigation_step:
+
+	call navegation_read_queue
+	jr c, .end
+
+	xor a
+	cp d
+	jr nz, .cont
+
+	ld a, e
+	cp MAP_WIDTH
+	jr nc, .cont
+	jr .not_up
+
 	
+
+	.cont
+		push de
+		ld l, e
+		ld h, d
+
+		ld   a, l
+	    sub  LOW(MAP_WIDTH)
+	    ld   l, a
+
+	    ld   a, h
+	    sbc  HIGH(MAP_WIDTH)
+	    ld   h, a
+
+	    ld bc, walk_dist
+	    add hl, bc
+
+	    ld b, DIR_DOWN
+	    call search_try_neighbor
+	    pop de
+		
+
+
+	.not_up
+	.end 
+		ret
