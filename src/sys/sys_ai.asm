@@ -17,6 +17,12 @@ SECTION "AI", ROM0
 ;; 📥 DE = entity
 ;; ❌ Modifies A, BC, HL
 sys_ai_one::
+
+    FIELD_HL E_AI_TYPE    
+    ld a, [hl]
+    bit AI_HUNT_BIT, a
+    jp nz, sys_ai_follow_navigation
+
     ld   h, d                         ;; \ HL = &entity.THINK: the same page as the entity,
     ld   a, e                         ;; | the offset added to the low byte (no carry)
     add  E_THINK                      ;; |
