@@ -107,3 +107,58 @@ sys_ai_update::
     ld   b, CMP_AI
     ld   hl, sys_ai_one
     jp   man_entity_forall_matching
+
+
+sys_ai_follow_navigation::
+
+    FIELD_HL E_X
+    ld a, [hl]
+    and 7
+    jr nz, .end
+
+    FIELD_HL E_Y
+    ld a, [hl]
+    and 7
+    jr nz, .end
+
+    FIELD_HL E_Y
+    ld a, [hl]
+    srl a
+    srl a
+    srl a
+    ld b, a
+
+    FIELD_HL E_X
+    ld a, [hl]
+    srl a
+    srl a
+    srl a
+    ld c, a
+
+    ld l, b
+    ld h, 0
+    add hl, hl
+    add hl ,hl
+    add hl, hl
+    add hl, hl
+    add hl, hl
+    
+    ld b, 0
+    add hl, bc 
+
+    ld bc, walk_dist
+    add hl, bc
+
+    ld a, [hl]
+    cp DIR_MASK + 1
+    jr nc, .not_valid
+
+    ld b, a
+    call sys_physics_walk
+    ret 
+
+    .not_valid
+        call sys_physics_stop
+        ret
+    .end
+        ret
