@@ -1,5 +1,6 @@
 INCLUDE "man/man_map.inc"
 INCLUDE "scn/scn_game.inc"
+INCLUDE "engine/gfx.inc"
 
 DEF NAV_UNVISITED = $FF
 DEF NAV_TARGET    = $FE
@@ -192,4 +193,53 @@ navegation_add_queue:
 		ret
 
 
+search_try_neighbor:
+	
+	ld a, [hl]
+	cp NAV_UNVISITED
+	jr nz, .end
+
+	push hl
+	ld de, map_ram + MAP_WIDTH - walk_dist
+	add hl, de
+
+	ld   a, [hl+]
+    cp   TILE_FIRST_SOLID
+    jr   nc, .blocked
+
+    ld   a, [hl]
+    cp   TILE_FIRST_SOLID
+    jr   nc, .blocked
+
+
+	pop hl
+	push hl
+
+    ld   a, l
+    sub  LOW(walk_dist)
+    ld   l, a
+
+    ld   a, h
+    sbc  HIGH(walk_dist)
+    ld   h, a
+
+	ld e, l
+	ld d, h
+	
+	push bc
+	call navegation_add_queue
+	pop bc
+	pop hl
+
+	jr c, .end
+	ld a, b
+	ld [hl], a
+
+	ret
+
+	.blocked
+		pop hl
+		ret
+	.end
+		ret
 	
