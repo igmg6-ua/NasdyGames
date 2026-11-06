@@ -250,16 +250,16 @@ navigation_step:
 
 	xor a
 	cp d
-	jr nz, .cont
+	jr nz, .cont_up
 
 	ld a, e
 	cp MAP_WIDTH
-	jr nc, .cont
+	jr nc, .cont_up
 	jr .not_up
 
 	
 
-	.cont
+	.cont_up
 		push de
 		ld l, e
 		ld h, d
@@ -280,7 +280,66 @@ navigation_step:
 	    pop de
 		
 
-
 	.not_up
+
+		ld bc, MAP_SIZE - 2*MAP_WIDTH
+		ld a, d
+		cp b
+		jr c, .cont_down
+		jr nz, .not_down
+
+		ld a, e
+		cp c
+		jr c, .cont_down
+		jr .not_down
+	
+	.cont_down
+		push de
+
+		ld l, e
+		ld h, d
+		ld bc, MAP_WIDTH + walk_dist
+		add hl, bc
+
+		ld b, DIR_UP
+		
+		call search_try_neighbor
+		pop de
+	
+	.not_down
+		ld a, e
+		and MAP_WIDTH - 1
+		jr z, .not_left
+
+		push de
+		ld l, e
+		ld h, d
+		dec hl
+
+		ld bc, walk_dist
+		add hl, bc
+
+		ld b, DIR_RIGHT
+		call search_try_neighbor
+		pop de
+
+	.not_left
+		ld a, e
+		and MAP_WIDTH - 1
+		cp MAP_WIDTH - 2
+		jr nc, .end
+
+		push de
+		ld l, e
+		ld h, d
+		inc hl
+
+		ld bc, walk_dist
+		add hl, bc
+
+		ld b, DIR_LEFT
+		call search_try_neighbor
+		pop de
+	
 	.end 
 		ret
