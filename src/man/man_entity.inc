@@ -28,8 +28,6 @@ DEF SIZEOF_ENTITY RB 0        ;; = 16
 DEF ENTITY_ARRAY_SIZE = MAX_ENTITIES * SIZEOF_ENTITY
 
 ;; Los 3 bytes libres, en este juego:
-DEF E_AI_WAIT = E_RESERVED + 1 ;; frames bloqueado: recuperacion sin teletransportar
-DEF E_AI_YIELD = E_RESERVED + 2 ;; breve desvio para salir de un atasco
 DEF E_AI_TYPE = E_RESERVED    ;; 13 AI: cómo persigue (AI_HUNT_BIT, AI_FAST_BIT)
 
 ;;--------------------------------------------------------------

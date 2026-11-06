@@ -9,11 +9,6 @@
 INCLUDE "scn/scn_game.inc"
 INCLUDE "engine/macros.inc"
 
-SECTION "Enemy spacing vars", WRAM0
-spacing_y: ds 1
-spacing_x: ds 1
-spacing_self: ds 1
-
 SECTION "Physics", ROM0
 
 ;; The velocity of each direction (VY, VX), index = DIR * 2
@@ -102,13 +97,6 @@ sys_physics_blocked::
 sys_physics_try::
     call sys_physics_blocked
     ret  nz
-    ld a, [de]
-    bit CMP_AI_BIT, a
-    jr z, .apply
-    ;; Comprobar separacion en cada pixel: mirar solo nodos permitiria cruzarse.
-    call sys_enemy_blocked
-    ret nz
-.apply
     FIELD_HL E_Y                      ;; \ Y += dY
     ld   a, [hl]                      ;; |
     add  b                            ;; |
@@ -116,12 +104,6 @@ sys_physics_try::
     ld   a, [hl]                      ;; \ X += dX
     add  c                            ;; |
     ld   [hl], a                      ;; /
-    ld a, [de]
-    bit CMP_AI_BIT, a
-    jr z, .moved
-    FIELD_HL E_AI_WAIT
-    ld [hl], 0
-.moved
     xor  a                            ;; Z
     ret
 
@@ -184,12 +166,6 @@ sys_physics_bump:
     jr   z, .not_ai                   ;; |
     FIELD_HL E_THINK                  ;; |
     ld   [hl], 1                      ;; |
-    FIELD_HL E_AI_WAIT
-    ld a, [hl]
-    cp $FF
-    jr z, .wait_full
-    inc [hl]
-.wait_full
     and  a                            ;; | carry = 0
     ret                               ;; /
 .not_ai
@@ -268,59 +244,3 @@ sys_physics_update::
     ld   b, CMP_PHYSICS
     ld   hl, sys_physics_one
     jp   man_entity_forall_matching
-
-;; DE = enemigo, B/C = desplazamiento propuesto. NZ si invade otro cuerpo.
-;; No incluye al heroe ni disparos. Conserva BC y DE; modifica A, HL.
-sys_enemy_blocked::
-    push bc
-    FIELD_HL E_Y
-    ld a, [hl+]
-    add b
-    ld [spacing_y], a
-    ld a, [hl]
-    add c
-    ld [spacing_x], a
-    ld a, e
-    ld [spacing_self], a
-    ld hl, entity_array
-    ld b, MAX_ENTITIES
-.next
-    ld a, [hl]
-    bit CMP_AI_BIT, a
-    jr z, .skip
-    ld a, [spacing_self]
-    cp l
-    jr z, .skip
-    inc l
-    ld a, [spacing_y]
-    sub [hl]
-    jr nc, .positive_y
-    cpl
-    inc a
-.positive_y
-    cp ENEMY_GAP
-    jr nc, .skip
-    inc l
-    ld a, [spacing_x]
-    sub [hl]
-    jr nc, .positive_x
-    cpl
-    inc a
-.positive_x
-    cp ENEMY_GAP
-    jr nc, .skip
-    pop bc
-    ld a, 1
-    or a
-    ret
-.skip
-    ;; La entidad ocupa 16 bytes alineados; quitar el offset de Y/X antes de avanzar.
-    ld a, l
-    and $F0
-    add SIZEOF_ENTITY
-    ld l, a
-    dec b
-    jr nz, .next
-    pop bc
-    xor a
-    ret
