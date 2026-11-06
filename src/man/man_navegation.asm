@@ -75,8 +75,6 @@ navegation_init::
 	add hl, bc
 
 	ld [hl], NAV_TARGET
-	call navegation_read_queue
-	call navegation_read_queue
 	ret
 
 navegation_read_queue:
