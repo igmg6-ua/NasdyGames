@@ -36,7 +36,8 @@ MAX_TIME = 999
 SONGS = ['SongLevel1'] * 3 + ['SongLevel2'] * 3 + ['SongLevel3'] * 4
 # La IA de los espectros de cada nivel: pares, impares
 #   0 = deambula, 1 = caza, 2 = rápido, 3 = rápido y caza
-AI = [(0, 0), (0, 0), (1, 0), (1, 0), (1, 1), (2, 1), (2, 1), (3, 1), (3, 1), (3, 1)]
+# Con la navegacion real no todos deben perseguir: el resto deja ventanas de escape.
+AI = [(1, 0), (1, 0), (1, 0), (1, 0), (1, 0), (2, 1), (2, 1), (2, 1), (3, 0), (3, 2)]
 
 
 def fail(path, msg):
