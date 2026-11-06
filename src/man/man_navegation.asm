@@ -13,11 +13,13 @@ SECTION "Navigation vars", WRAM0
 
 	nav_read:  ds 2
 	nav_write: ds 2
+	nav_busy:   ds 1
+	nav_target: ds 2
 
 
 SECTION "Navigation", ROM0
 
-
+	
 
 navegation_init::
 	xor a
@@ -29,6 +31,41 @@ navegation_init::
 	ld bc, MAP_SIZE
 	ld a, NAV_UNVISITED
 	call memset16
+	call navigation_get_player_index
+
+	ld a, l
+	ld [nav_queue], a
+	ld [nav_target], a
+	ld a, h
+	ld [nav_queue + 1], a
+	ld [nav_target + 1], a
+	ld a, 1
+	ld [nav_write], a
+	ld [nav_busy], a
+
+	ld bc, walk_dist
+	add hl, bc
+
+	ld [hl], NAV_TARGET
+									;; TESTSper
+									;;ld a, $FF
+								    ;;ld [nav_write], a
+								    ;;ld a, $03
+								    ;;ld [nav_write + 1], a
+
+
+									;;ld a, $00
+									;;ld [nav_write], a
+									;;ld a, $04
+									;;ld [nav_write + 1], a
+
+									;;ld de, $0123
+									;;call navegation_add_queue
+	ret
+
+;; Devuelve HL = fila * MAP_WIDTH + columna del jugador.
+;; Modifica A, BC y HL. Conserva DE.
+navigation_get_player_index:
 	ld a, [PLAYER_ENTITY + E_Y]
 	ld b, a
 	ld a, 3
@@ -63,31 +100,6 @@ navegation_init::
 	ld c, a
 	add hl, bc
 
-	ld a, l
-	ld [nav_queue], a
-	ld a, h
-	ld [nav_queue + 1], a
-	ld a, 1
-	ld [nav_write], a
-
-	ld bc, walk_dist
-	add hl, bc
-
-	ld [hl], NAV_TARGET
-									;; TESTSper
-									;;ld a, $FF
-								    ;;ld [nav_write], a
-								    ;;ld a, $03
-								    ;;ld [nav_write + 1], a
-
-
-									;;ld a, $00
-									;;ld [nav_write], a
-									;;ld a, $04
-									;;ld [nav_write + 1], a
-
-									;;ld de, $0123
-									;;call navegation_add_queue
 	ret
 
 navegation_read_queue:
@@ -353,4 +365,37 @@ navegation_build::
 	.repeat
 		call navigation_step
 		jr nc, .repeat
+		xor a
+		ld [nav_busy], a
+		ret
+
+navegation_update::
+	
+	ld a, [nav_busy]
+	or a
+	jr z, .check_target
+	ld a, 4
+	.call
+		push af
+		call navigation_step
+		jr c, .end_search
+		pop af
+		dec a
+		jr nz, .call
+		jr .end
+	.end_search
+		pop af
+		xor a
+		ld [nav_busy], a
+		ret
+	.check_target
+		call navigation_get_player_index
+		
+		ld a, [nav_target]
+		cp l
+		jp nz, navegation_init
+		ld a, [nav_target + 1]
+		cp h
+		jp nz, navegation_init
+	.end
 		ret
