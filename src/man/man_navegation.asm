@@ -246,7 +246,7 @@ search_try_neighbor:
 navigation_step:
 
 	call navegation_read_queue
-	jr c, .end
+	jr c, .empty
 
 	xor a
 	cp d
@@ -341,5 +341,10 @@ navigation_step:
 		call search_try_neighbor
 		pop de
 	
-	.end 
+	.end
+		xor a 
+		ret
+	.empty 
+		xor a 
+		cp 1
 		ret
